@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+"""Fake `gh` for tests. Serves fixture JSON by query shape and logs every call to calls.log."""
+import json
+import os
+import sys
+
+fixtures = os.environ["FAKE_GH_DIR"]
+args = sys.argv[1:]
+with open(os.path.join(fixtures, "calls.log"), "a") as log:
+    log.write(json.dumps(args) + "\n")
+
+
+def serve(name):
+    with open(os.path.join(fixtures, name)) as f:
+        sys.stdout.write(f.read())
+
+
+if args[:2] == ["api", "graphql"]:
+    query = next(a for a in args if a.startswith("query="))
+    if "projectsV2" in query:
+        serve("project.json")
+    elif "items(first" in query:
+        serve("items_page2.json" if any(a.startswith("after=") for a in args) else "items_page1.json")
+    elif "addProjectV2ItemById" in query:
+        serve("add.json")
+    elif "updateProjectV2ItemFieldValue" in query:
+        print('{"data":{"updateProjectV2ItemFieldValue":{"projectV2Item":{"id":"PVTI_set"}}}}')
+    else:
+        sys.exit(f"fake gh: unhandled graphql query {query[:80]!r}")
+elif args[0] == "api" and args[1].startswith("repos/") and "/issues/" in args[1]:
+    print("I_node_" + args[1].rsplit("/", 1)[1])
+elif args[:2] == ["repo", "view"]:
+    print("octo/app-one")
+else:
+    sys.exit(f"fake gh: unhandled args {args!r}")

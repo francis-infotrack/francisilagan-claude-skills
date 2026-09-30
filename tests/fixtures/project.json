@@ -1,0 +1,9 @@
+{"data":{"user":{"projectsV2":{"nodes":[
+  {"id":"PVT_old","title":"Old empty project","fields":{"nodes":[{},{"id":"F_old_status","name":"Status","options":[{"id":"o1","name":"Todo"}]}]}},
+  {"id":"PVT_pe","title":"Personal Engineering","fields":{"nodes":[
+    {},
+    {"id":"F_status","name":"Status","options":[{"id":"s_backlog","name":"Backlog"},{"id":"s_ready","name":"Ready"},{"id":"s_prog","name":"In Progress"},{"id":"s_rev","name":"In Review"},{"id":"s_done","name":"Done"}]},
+    {"id":"F_prio","name":"Priority","options":[{"id":"p0","name":"P0"},{"id":"p1","name":"P1"},{"id":"p2","name":"P2"},{"id":"p3","name":"P3"}]},
+    {"id":"F_effort","name":"Effort","options":[{"id":"e_xs","name":"XS"},{"id":"e_s","name":"S"},{"id":"e_m","name":"M"},{"id":"e_l","name":"L"},{"id":"e_xl","name":"XL"}]}
+  ]}}
+]}}}}

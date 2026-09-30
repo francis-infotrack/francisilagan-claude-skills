@@ -1,0 +1,4 @@
+{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false,"endCursor":null},"nodes":[
+  {"id":"PVTI_3","fieldValues":{"nodes":[{"name":"Backlog","field":{"name":"Status"}}]},
+   "content":{"id":"I_3","number":12,"title":"Untriaged idea","url":"https://github.com/octo/app-two/issues/12","createdAt":"2026-09-10T00:00:00Z","repository":{"nameWithOwner":"octo/app-two"},"labels":{"nodes":[]},"assignees":{"nodes":[]}}}
+]}}}}

@@ -1,0 +1,7 @@
+{"data":{"node":{"items":{"pageInfo":{"hasNextPage":true,"endCursor":"CURSOR1"},"nodes":[
+  {"id":"PVTI_1","fieldValues":{"nodes":[{},{"name":"Ready","field":{"name":"Status"}},{"name":"P1","field":{"name":"Priority"}},{"name":"S","field":{"name":"Effort"}}]},
+   "content":{"id":"I_1","number":7,"title":"CSV export for budgets","url":"https://github.com/octo/app-one/issues/7","createdAt":"2026-09-01T00:00:00Z","repository":{"nameWithOwner":"octo/app-one"},"labels":{"nodes":[{"name":"agent-ready"},{"name":"enhancement"}]},"assignees":{"nodes":[]}}},
+  {"id":"PVTI_2","fieldValues":{"nodes":[{"name":"In Progress","field":{"name":"Status"}}]},
+   "content":{"id":"I_2","number":9,"title":"Fix crash on sync","url":"https://github.com/octo/app-three/issues/9","createdAt":"2026-08-20T00:00:00Z","repository":{"nameWithOwner":"octo/app-three"},"labels":{"nodes":[{"name":"bug"}]},"assignees":{"nodes":[{"login":"octo"}]}}},
+  {"id":"PVTI_pr","fieldValues":{"nodes":[{"name":"In Review","field":{"name":"Status"}}]},"content":{"id":"PR_1"}}
+]}}}}
