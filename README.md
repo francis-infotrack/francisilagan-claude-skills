@@ -32,6 +32,8 @@ Requires `gh` (authenticated) and Python 3.11+.
 
 Gates: CRAP ≤ 6 on touched functions, architecture checks green, zero surviving non-equivalent mutants, and (six-pack) an executable QA run with an evidence report. The stage subagents (`francis:gauntlet-specifier`, `-coder`, `-cleaner`, `-architect`, `-hardener`, `-qa`) live in [`agents/`](agents). Each repo supplies its own stage → command table in its `CLAUDE.md`/`AGENTS.md`.
 
+In the four- and six-pack you approve the spec before any code is written: the specifier's scenarios and assumptions are shown to you to approve, revise or stop (`--no-gate` skips this). In ticket mode the Ready issue is the approval, unless the specifier had to assume something a user could observe — then it posts those questions on the issue, labels it `needs-human` and stops.
+
 Every stage ends by auditing its own work: a requirement → evidence table (scenario → test, function → CRAP score, file → mutation result, QA step → verdict), and a report with a missing table or an unexplained gap goes back to that stage. The hardener also mutates `Scenario Outline` example values, and QA fails any scenario ID that no test carries.
 
 Given an issue reference it runs in **ticket mode**: claims the issue, opens a draft PR with `Closes #n`, and lets the repo's project-sync workflow move the board card.

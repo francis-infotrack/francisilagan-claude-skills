@@ -18,14 +18,14 @@ convention go into every sub-agent prompt verbatim.
 - Issue given → use it.
 - No issue → `gh-board items --status Ready --unassigned --repo <owner/repo>` (JSON lines).
   Take the highest priority (`P0` < `P1` < `P2` …), then oldest `created_at`. Prefer items
-  labelled `agent-ready` when priorities tie. Announce the pick in one line and go.
+  labelled `agent-ready` when priorities tie. Skip anything labelled `needs-human`. Announce the pick in one line and go.
 - Stop and report if the issue is closed, assigned to someone else, or not `Ready`.
 
 ## 2. Implement — gauntlet, ticket mode
 
 Invoke the `francis:gauntlet` skill with `<pack?> #<n>`. Ticket mode claims the issue, branches
 off `origin/<default>`, opens the draft PR with `Closes #<n>`, commits each stage locally, pushes
-once at completion, and marks the PR ready. If the gauntlet ends **blocked** (`needs-human`), stop here and report.
+once at completion, and marks the PR ready. If the gauntlet ends **blocked** (`needs-human`) — including a spec gate that posted behavioural assumptions to the issue — stop here and report.
 
 Record: PR number, branch, and the base ref `origin/<default>`.
 

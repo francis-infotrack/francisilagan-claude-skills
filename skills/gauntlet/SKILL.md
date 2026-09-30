@@ -1,11 +1,11 @@
 ---
 name: gauntlet
 description: Run a feature through the Uncle Bob agent gauntlet at a chosen weight — two-pack (coder ↔ finisher tight loop), four-pack (spec-driven without separate hardening/QA agents), or the full six-pack (specifier → coder → cleaner → architect → hardener → QA) — with deterministic quality gates (CRAP ≤ 6, architecture checks, mutation testing) and, for the six-pack, an executable QA run plus evidence report. Use when a story should come out mutation-hardened; pick the pack by stakes and size.
-argument-hint: [2|4|6] [issue ref | feature description | spec file path]
-allowed-tools: Bash, Read, Write, Edit, Grep, Glob, Agent
+argument-hint: [2|4|6] [--no-gate] [issue ref | feature description | spec file path]
+allowed-tools: Bash, Read, Write, Edit, Grep, Glob, Agent, AskUserQuestion
 ---
 
-Run **$ARGUMENTS** through the agent gauntlet. If the first token of the arguments is `2`, `4`, or `6`, that selects the pack; otherwise default to **6**. If the remaining argument is an issue reference (`#42`, `owner/repo#42`, or an issue URL) the run is in **ticket mode** — see that section; it changes claiming, pack choice, pushing, and completion. Everything else is unchanged. You are the orchestrator: you dispatch the stage agents, carry their reports forward, and enforce the handoff rules. You do not write production code yourself.
+Run **$ARGUMENTS** through the agent gauntlet. If the first token of the arguments is `2`, `4`, or `6`, that selects the pack; otherwise default to **6**. A `--no-gate` token anywhere skips the interactive spec gate. If the remaining argument is an issue reference (`#42`, `owner/repo#42`, or an issue URL) the run is in **ticket mode** — see that section; it changes claiming, pack choice, pushing, and completion. Everything else is unchanged. You are the orchestrator: you dispatch the stage agents, carry their reports forward, and enforce the handoff rules. You do not write production code yourself.
 
 The six agent files at `${CLAUDE_PLUGIN_ROOT}/agents/gauntlet-*.md` are the single source of truth for each responsibility. They ship in this plugin, so dispatch them with `subagent_type` `francis:gauntlet-<stage>` (e.g. `francis:gauntlet-coder`); the names below omit the prefix. Smaller packs don't get watered-down copies — they get **composed roles**: one dispatch whose prompt tells the agent to execute several role files in order within one context. When composing, instruct the agent to read the named role files and apply them; pass the slug, branch, and prior stage report as usual.
 
@@ -30,7 +30,7 @@ The six agent files at `${CLAUDE_PLUGIN_ROOT}/agents/gauntlet-*.md` are the sing
 
 ## Four-pack: specifier → coder → refactorer → architect
 
-1. **gauntlet-specifier** — four-pack mode: Gherkin only, no QA procedure.
+1. **gauntlet-specifier** — four-pack mode: Gherkin only, no QA procedure. Then the **spec gate**.
 2. **gauntlet-coder** — standard.
 3. **Refactorer** (composed) — dispatch `gauntlet-cleaner` with this addition: *"You also own property-test assessment in this pack: identify invariants in the touched domain logic (round-trips, conservation, idempotence, ordering) and propose concrete property-test cases in your report — do not add packages unilaterally."* Gate: CRAP ≤ 6, suites green.
 4. **Hardening architect** (composed) — dispatch `gauntlet-architect` with this addition: *"After the structural review and its gate, in this same pass execute the mutation work of `${CLAUDE_PLUGIN_ROOT}/agents/gauntlet-hardener.md` (differential, touched files only, tests-only additions). Read that file and follow it."* Gate: architecture checks green, zero surviving non-equivalent mutants.
@@ -39,12 +39,20 @@ The six agent files at `${CLAUDE_PLUGIN_ROOT}/agents/gauntlet-*.md` are the sing
 
 Sequential, one stage per fresh context:
 
-1. **gauntlet-specifier** → `acceptance.feature` + `qa-procedure.md`. Present spec summary and assumptions to the user if present; in an autonomous run, proceed and record assumptions in the final report.
+1. **gauntlet-specifier** → `acceptance.feature` + `qa-procedure.md`. Then the **spec gate**.
 2. **gauntlet-coder** → implementation + tests. Gate: impacted suites green.
 3. **gauntlet-cleaner** → refactored diff. Gate: CRAP ≤ 6, suites green.
 4. **gauntlet-architect** → boundary review. Gate: architecture checks green; new checks committed where a boundary was worth locking.
 5. **gauntlet-hardener** → added tests. Gate: zero surviving non-equivalent mutants; no leftover mutations in the tree.
 6. **gauntlet-qa** → executable QA script + `evidence.md`. Gate: every QA step PASS.
+
+## Spec gate (four- and six-pack)
+
+Humans own the spec; agents own everything after it. No coder dispatch until the gate passes.
+
+- **Interactive run** (not ticket mode, no `--no-gate`): show the user the scenario list (ID + title), every assumption with its tag, and — six-pack — a one-line-per-step summary of `qa-procedure.md`, with the spec paths. Ask with AskUserQuestion: **Approve** / **Revise** (the user's notes go back to a fresh `gauntlet-specifier` dispatch in revision mode, then the gate runs again) / **Stop**. Record the approval, and any notes, in the final report.
+- **Ticket mode**: the issue reaching Ready was the human gate. Proceed unless the specifier recorded any **[behavioural]** assumption — then comment the scenario list and those assumptions on the issue as questions, `gh issue edit <ref> --add-label needs-human --remove-assignee @me`, `gh-board status <ref> "Backlog"`, and stop. No branch push, no PR. Whoever answers removes the label and moves the card back to Ready.
+- **`--no-gate`**: proceed, and list every assumption in the final report.
 
 ## Handoff rules (all packs)
 

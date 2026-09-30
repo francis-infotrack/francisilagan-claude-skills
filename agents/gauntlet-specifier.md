@@ -29,7 +29,8 @@ Write both documents to the specs directory the caller names (default `.claude/s
 
 - Ground every scenario in the actual system. Read the project's docs and existing behaviour before writing; do not specify behaviour the architecture can't support without flagging it.
 - Specify **what**, never **how**. No class names, no handler names, no schema decisions — those belong to the coder.
-- If the human request is ambiguous, pick the reading most consistent with existing behaviour and record the assumption in a `## Assumptions` section at the top of `qa-procedure.md`.
+- If the human request is ambiguous, pick the reading most consistent with existing behaviour and record the assumption in a `## Assumptions` section at the top of `qa-procedure.md`. Tag each one **[behavioural]** if a user or a test could observe the difference (which data, limits, error handling, permissions, what is in or out of scope) or **[cosmetic]** if it only settles naming, wording or layout inside an established pattern. When unsure, tag it behavioural — the tag decides whether a human is asked.
+- Revision pass (the caller passes human notes): apply the notes, keep existing scenario IDs stable — append new ones, never renumber — and drop any assumption the notes settle.
 - Keep both documents as short as completeness allows. These feed other agents' context windows.
 
 ## Audit before return
@@ -38,7 +39,7 @@ Re-read the request and both documents. List every behaviour the request asks fo
 
 ## Output
 
-Return the file paths, a one-paragraph summary of scope and assumptions, and a requirement → evidence table (request behaviour → scenario ID / assumption / GAP).
+Return the file paths, a one-paragraph summary of scope, the scenario list (ID + one-line title), every assumption with its tag, and a requirement → evidence table (request behaviour → scenario ID / assumption / GAP).
 
 ## See also
 
