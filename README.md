@@ -18,7 +18,7 @@ Given an issue reference it runs in **ticket mode**: claims the issue, opens a d
 
 ## ship-ticket
 
-`/ship-ticket` takes a GitHub issue from Ready to merged with no human in the loop: gauntlet in ticket mode, then repeated fresh two-axis code reviews ([`pocock-code-review`](skills/pocock-code-review)) and fixers until a round finds nothing, then CI and squash-merge.
+`/ship-ticket` takes a GitHub issue from Ready to merged with no human in the loop: gauntlet in ticket mode, then repeated fresh reviews (the built-in `code-review` skill plus an acceptance-criteria check) and fixers until a round finds nothing, then CI and squash-merge.
 
 ## gh-board
 
@@ -32,7 +32,3 @@ git clone https://github.com/francis-infotrack/skills ~/Code/skills
 ```
 
 Requires `gh` (authenticated) and Python 3.11+.
-
-## Third-party
-
-`skills/pocock-code-review` is vendored from [mattpocock/skills](https://github.com/mattpocock/skills) (MIT, © Matt Pocock), renamed and lightly edited; see the header comment in that file.

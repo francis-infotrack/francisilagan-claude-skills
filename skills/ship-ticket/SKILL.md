@@ -1,6 +1,6 @@
 ---
 name: ship-ticket
-description: Take a GitHub issue from Ready to merged with no human in the loop — claim it, implement it through the gauntlet (ticket mode, draft PR), then loop a fresh two-axis Pocock code review and a fresh fixer sub-agent until a review round produces no fixes, wait for CI, and squash-merge. Use when the user says "ship ticket", "pick up a ticket and implement it end to end", or "/ship-ticket".
+description: Take a GitHub issue from Ready to merged with no human in the loop — claim it, implement it through the gauntlet (ticket mode, draft PR), then loop a fresh code review (built-in `code-review` plus an acceptance-criteria check) and a fresh fixer sub-agent until a review round produces no fixes, wait for CI, and squash-merge. Use when the user says "ship ticket", "pick up a ticket and implement it end to end", or "/ship-ticket".
 argument-hint: "[#issue | issue URL] [2|4|6]  (no issue = top Ready item on the board)"
 allowed-tools: Bash, Read, Write, Edit, Grep, Glob, Agent, Skill
 ---
@@ -32,26 +32,27 @@ Record: PR number, branch, and the base ref `origin/<default>`.
 ## 3. Review ↔ fix loop
 
 Each round uses **brand-new sub-agents** — never SendMessage to a previous round's agent.
-Keep a running `ledger` of every finding so far: `{round, axis, finding, verdict, reason/commit}`.
+Keep a running `ledger` of every finding so far: `{round, finding, verdict, reason/commit}`.
 
-### 3a. Review — follow `~/.claude/skills/pocock-code-review/SKILL.md`
+### 3a. Review — one fresh sub-agent running the built-in `code-review` skill
 
-Read that file and run it exactly, with these values pinned so it never has to ask:
+`git fetch origin`, then dispatch one fresh `general-purpose` sub-agent in the foreground
+(never `run_in_background`; a background sub-agent dies or reports to the wrong session
+when your turn ends). Its brief:
 
-- Fixed point: `origin/<default>` (after `git fetch origin`).
-- Spec: the issue body + comments (`gh issue view <n> --comments`), plus
-  `.claude/specs/gauntlet/<slug>/acceptance.feature` if the gauntlet wrote one.
-- Standards sources: CLAUDE.md, AGENTS.md, CONTEXT.md, README.md, CONTRIBUTING.md —
-  whichever exist.
+> Invoke the `code-review` skill at `high` on the diff `origin/<default>...HEAD` of
+> branch `<branch>`. Do not use `--fix` or `--comment`; report only. Then check the diff
+> against the spec below and add a finding for every acceptance criterion that is
+> missing or implemented wrongly, quoting the criterion. Findings already raised and
+> declined in earlier rounds are listed below with the reason. Do not repeat one unless
+> the code has changed in a way that invalidates the reason.
 
-Its Standards and Spec sub-agents are spawned fresh in parallel (one message, two Agent
-calls, both in the foreground — never `run_in_background`; a background sub-agent dies or
-reports to the wrong session when your turn ends). Add to both prompts: *"Findings already raised and declined in earlier rounds are
-listed below with the reason. Do not repeat one unless the code has changed in a way that
-invalidates the reason."* followed by the declined ledger rows. Keep the aggregate report
-at `.claude/specs/gauntlet/<slug>/review-round-<k>.md`.
+Pass it the spec (the issue body + comments from `gh issue view <n> --comments`, plus
+`.claude/specs/gauntlet/<slug>/acceptance.feature` if the gauntlet wrote one), the repo's
+CLAUDE.md / AGENTS.md rules, and the declined ledger rows. Keep its report at
+`.claude/specs/gauntlet/<slug>/review-round-<k>.md`.
 
-If both axes report zero findings → the loop is done (go to 4).
+If it reports zero findings → the loop is done (go to 4).
 
 ### 3b. Fix — one fresh `general-purpose` sub-agent
 
@@ -62,7 +63,7 @@ test/lint/typecheck commands and byte-pin rules, and this brief:
 > real spec gaps/bugs. Judgement-call smells: fix when the change is small and clearly
 > better; decline when a documented repo standard endorses the code, when the fix is
 > scope creep beyond the issue, or when it would churn stable code for taste. Never
-> decline a Spec (a) missing-requirement or (c) wrong-implementation finding without
+> decline a missing or wrongly implemented acceptance-criterion finding without
 > quoting the spec line that shows it is actually met.
 > Add or adjust tests for every behavioural fix; never weaken or delete an assertion to
 > go green. Run the impacted suites, typecheck and lint until green. Commit in the repo's
@@ -102,7 +103,7 @@ when you return.
 No approval step — the clean review loop plus green CI is the gate.
 
 1. Post the ledger as a plain PR comment (`gh pr comment <pr>`): rounds run, findings
-   fixed/declined per axis, CI status, and the declined findings with reasons.
+   fixed/declined, CI status, and the declined findings with reasons.
 2. Re-check mergeability: `gh pr view <pr> --json mergeable,mergeStateStatus,headRefOid`.
    If `origin/<default>` moved and the PR is behind or conflicting, rebase via a fresh
    fixer (use the `resolving-merge-conflicts` skill), push, and go back to 4.
