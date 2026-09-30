@@ -7,7 +7,7 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob, Agent
 
 Run **$ARGUMENTS** through the agent gauntlet. If the first token of the arguments is `2`, `4`, or `6`, that selects the pack; otherwise default to **6**. If the remaining argument is an issue reference (`#42`, `owner/repo#42`, or an issue URL) the run is in **ticket mode** — see that section; it changes claiming, pack choice, pushing, and completion. Everything else is unchanged. You are the orchestrator: you dispatch the stage agents, carry their reports forward, and enforce the handoff rules. You do not write production code yourself.
 
-The six agent files at `~/.claude/agents/gauntlet-*.md` are the single source of truth for each responsibility. Smaller packs don't get watered-down copies — they get **composed roles**: one dispatch whose prompt tells the agent to execute several role files in order within one context. When composing, instruct the agent to read the named role files and apply them; pass the slug, branch, and prior stage report as usual.
+The six agent files at `${CLAUDE_PLUGIN_ROOT}/agents/gauntlet-*.md` are the single source of truth for each responsibility. They ship in this plugin, so dispatch them with `subagent_type` `francis:gauntlet-<stage>` (e.g. `francis:gauntlet-coder`); the names below omit the prefix. Smaller packs don't get watered-down copies — they get **composed roles**: one dispatch whose prompt tells the agent to execute several role files in order within one context. When composing, instruct the agent to read the named role files and apply them; pass the slug, branch, and prior stage report as usual.
 
 ## Picking a pack
 
@@ -25,7 +25,7 @@ The six agent files at `~/.claude/agents/gauntlet-*.md` are the single source of
 ## Two-pack: coder ↔ finisher
 
 1. **gauntlet-coder** — pass the raw behaviour request (two-pack mode: no spec file; unit-test-encoded behaviours). Gate: impacted suites green, committed.
-2. **Finisher** (composed) — dispatch `gauntlet-cleaner` with this addition: *"After the CRAP loop and review pass, in this same pass apply the review phases and deterministic gate of `~/.claude/agents/gauntlet-architect.md`, then the mutation work of `~/.claude/agents/gauntlet-hardener.md` (differential, touched files only). Read both files and follow them. Report per role."* Gate: CRAP ≤ 6, architecture checks green, zero surviving non-equivalent mutants.
+2. **Finisher** (composed) — dispatch `gauntlet-cleaner` with this addition: *"After the CRAP loop and review pass, in this same pass apply the review phases and deterministic gate of `${CLAUDE_PLUGIN_ROOT}/agents/gauntlet-architect.md`, then the mutation work of `${CLAUDE_PLUGIN_ROOT}/agents/gauntlet-hardener.md` (differential, touched files only). Read both files and follow them. Report per role."* Gate: CRAP ≤ 6, architecture checks green, zero surviving non-equivalent mutants.
 3. If the request has multiple behaviour slices, loop 1 → 2 per slice rather than batching everything into one giant diff.
 
 ## Four-pack: specifier → coder → refactorer → architect
@@ -33,7 +33,7 @@ The six agent files at `~/.claude/agents/gauntlet-*.md` are the single source of
 1. **gauntlet-specifier** — four-pack mode: Gherkin only, no QA procedure.
 2. **gauntlet-coder** — standard.
 3. **Refactorer** (composed) — dispatch `gauntlet-cleaner` with this addition: *"You also own property-test assessment in this pack: identify invariants in the touched domain logic (round-trips, conservation, idempotence, ordering) and propose concrete property-test cases in your report — do not add packages unilaterally."* Gate: CRAP ≤ 6, suites green.
-4. **Hardening architect** (composed) — dispatch `gauntlet-architect` with this addition: *"After the structural review and its gate, in this same pass execute the mutation work of `~/.claude/agents/gauntlet-hardener.md` (differential, touched files only, tests-only additions). Read that file and follow it."* Gate: architecture checks green, zero surviving non-equivalent mutants.
+4. **Hardening architect** (composed) — dispatch `gauntlet-architect` with this addition: *"After the structural review and its gate, in this same pass execute the mutation work of `${CLAUDE_PLUGIN_ROOT}/agents/gauntlet-hardener.md` (differential, touched files only, tests-only additions). Read that file and follow it."* Gate: architecture checks green, zero surviving non-equivalent mutants.
 
 ## Six-pack: the full gauntlet
 

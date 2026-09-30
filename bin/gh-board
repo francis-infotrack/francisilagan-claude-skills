@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-exec python3 "$HOME/.claude/lib/gh_board.py" "$@"
+exec python3 "$(dirname "$(readlink -f "$0")")/../lib/gh_board.py" "$@"

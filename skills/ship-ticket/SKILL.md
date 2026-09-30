@@ -23,7 +23,7 @@ convention go into every sub-agent prompt verbatim.
 
 ## 2. Implement — gauntlet, ticket mode
 
-Invoke the `gauntlet` skill with `<pack?> #<n>`. Ticket mode claims the issue, branches
+Invoke the `francis:gauntlet` skill with `<pack?> #<n>`. Ticket mode claims the issue, branches
 off `origin/<default>`, opens the draft PR with `Closes #<n>`, commits each stage locally, pushes
 once at completion, and marks the PR ready. If the gauntlet ends **blocked** (`needs-human`), stop here and report.
 
@@ -106,7 +106,7 @@ No approval step — the clean review loop plus green CI is the gate.
    fixed/declined, CI status, and the declined findings with reasons.
 2. Re-check mergeability: `gh pr view <pr> --json mergeable,mergeStateStatus,headRefOid`.
    If `origin/<default>` moved and the PR is behind or conflicting, rebase via a fresh
-   fixer (use the `resolving-merge-conflicts` skill), push, and go back to 4.
+   fixer (it resolves conflicts itself, or uses a `resolving-merge-conflicts` skill if one is installed), push, and go back to 4.
 3. `gh pr merge <pr> --squash --delete-branch --match-head-commit <headRefOid>` — the
    squash subject is the PR title, which the gauntlet wrote in commit convention.
 4. Confirm Done: the issue is closed (`gh issue view <n> --json state`), and CI on the

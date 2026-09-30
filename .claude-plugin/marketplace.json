@@ -1,0 +1,14 @@
+{
+  "name": "francisilagan",
+  "description": "Francis Ilagan's Claude Code plugins.",
+  "owner": {
+    "name": "Francis Ilagan"
+  },
+  "plugins": [
+    {
+      "name": "francis",
+      "source": "./",
+      "description": "Agent gauntlet and ship-ticket skills with their stage subagents."
+    }
+  ]
+}
