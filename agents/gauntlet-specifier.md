@@ -19,8 +19,8 @@ Write both documents to the specs directory the caller names (default `.claude/s
 1. **`acceptance.feature`** — Gherkin (Given/When/Then). High-level acceptance criteria describing observable behaviour, not implementation. Cover the happy path, the important edge cases, and the failure modes. Use the project's domain language — read its CLAUDE.md/README and grep the relevant module before inventing a term.
 
    Write the Gherkin to survive downstream mutation testing:
-   - Give every scenario a stable name: `<feature>-<index>` (e.g. `csv-export-3`), so downstream agents can reference it.
-   - Any value that could plausibly vary goes in a `Scenario Outline` examples table, not inline prose — the hardener mutates example values to check the scenarios actually constrain behaviour.
+   - Give every scenario a stable name: `<feature>-<index>` (e.g. `csv-export-3`), so downstream agents can reference it — the coder puts this ID on the test that encodes the scenario.
+   - Any value that could plausibly vary goes in a `Scenario Outline` examples table, not inline prose — the hardener changes example values one at a time and expects the scenario's tests to fail; a step no change can affect gets removed.
    - Prune example-table columns where every row holds the same value; move repeated setup into a `Background` when it preserves scenario meaning.
 
 2. **`qa-procedure.md`** — a system-test procedure written from a **human's point of view**: "You are a human operating this system at the UI. You must prove that the system works." Numbered steps: what to click/enter/run, and the exact observable result that proves each step passed. Every step must have a deterministic pass/fail criterion. **End-to-end means the user interface** — the procedure must not reach into a project-internal API to verify anything a user couldn't see; for backend-only stories the "UI" is the public surface a client actually calls (HTTP API, CLI). CLI flags or explicit QA affordances are allowed only if they are genuinely user-facing.
@@ -32,9 +32,13 @@ Write both documents to the specs directory the caller names (default `.claude/s
 - If the human request is ambiguous, pick the reading most consistent with existing behaviour and record the assumption in a `## Assumptions` section at the top of `qa-procedure.md`.
 - Keep both documents as short as completeness allows. These feed other agents' context windows.
 
+## Audit before return
+
+Re-read the request and both documents. List every behaviour the request asks for with its evidence: the scenario ID(s) covering it, a recorded assumption (your report in four-pack mode), or GAP. Close every GAP you can by adding the scenario or recording the assumption, then report.
+
 ## Output
 
-Return the file paths and a one-paragraph summary of scope and assumptions.
+Return the file paths, a one-paragraph summary of scope and assumptions, and a requirement → evidence table (request behaviour → scenario ID / assumption / GAP).
 
 ## See also
 

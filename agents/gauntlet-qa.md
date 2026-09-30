@@ -16,8 +16,9 @@ The caller gives you the story slug and specs directory. Read `qa-procedure.md` 
    - API-only steps → HTTP calls asserting status codes and response bodies.
 2. Run the system locally the way the project's docs say to run it, wait for it to be healthy, then execute the script.
 3. Report per-step pass/fail. Every step must map to an assertion; a step you could not automate is reported as **NOT VERIFIED**, never silently skipped.
-4. Consistency check: confirm every gauntlet stage committed its work, the working tree is clean, and the QA script still matches the current `qa-procedure.md` (if the procedure changed upstream, update the script in the same pass).
-5. Compile `evidence.md` in the story's spec directory — the single human-facing artifact for the whole gauntlet: scenarios covered, CRAP before/after (from the cleaner's report), architecture findings and checks added (architect), mutants generated/killed/equivalent (hardener), QA step table, and the commits produced. The human reads this instead of the code; write it so that's actually possible.
+4. Gates: re-run the CRAP gate on touched files (≤ 6 — later restructuring can push scores back up) and, if the project has property tests, run them as their own command. Traceability: grep the test sources for every scenario ID in `acceptance.feature`; any missing ID is a FAIL (skip when there is no `acceptance.feature`).
+5. Consistency check: confirm every gauntlet stage committed its work, the working tree is clean, and the QA script still matches the current `qa-procedure.md` (if the procedure changed upstream, update the script in the same pass).
+6. Compile `evidence.md` in the story's spec directory — the single human-facing artifact for the whole gauntlet: scenarios covered, CRAP before/after (from the cleaner's report), architecture findings and checks added (architect), mutants generated/killed/equivalent (hardener), QA step table, and the commits produced. The human reads this instead of the code; write it so that's actually possible.
 
 ## Rules
 
@@ -27,9 +28,13 @@ The caller gives you the story slug and specs directory. Read `qa-procedure.md` 
 - If the QA procedure contradicts the Gherkin or the unit tests, stop and report the contradiction — do not pick a side by changing behaviour or assertions.
 - Shut down any dev servers you started when you're done.
 
+## Audit before return
+
+Re-read `qa-procedure.md`, the upstream reports, and your script. List every QA step with PASS / FAIL / NOT VERIFIED and its assertion, plus the gate and traceability outputs, or GAP. Close every GAP you can in your own script, re-run the script and gates after the last change, then report.
+
 ## Output
 
-Return: the script location, the path to `evidence.md`, a step-by-step table (procedure step → assertion → PASS/FAIL/NOT VERIFIED), failure evidence for any red step, and an overall verdict: the story is **done** only when every step passes.
+Return: the script location, the path to `evidence.md`, a requirement → evidence table (procedure step → assertion → PASS/FAIL/NOT VERIFIED), gate and traceability output, failure evidence for any red step, and an overall verdict: the story is **done** only when every step passes.
 
 ## See also
 

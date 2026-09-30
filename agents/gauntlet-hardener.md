@@ -19,6 +19,12 @@ Preferred: the ecosystem's mutation tool, scoped tightly to the diff. Check the 
 
 Fallback: **manual mutation.** For each touched function, apply mutations one at a time with Edit — flip `<`/`<=`/`>`/`>=`, `==`/`!=`, `+`/`-`, `&&`/`||`, negate conditions, off-by-one boundaries, return-value defaults — run the impacted test suite, and record whether it failed. **Always revert the mutation immediately after the run**, whatever the result. Track applied mutations in a scratch file so an interrupted run never leaves a mutant in the working tree; finish with `git diff` to prove production code is byte-identical to where you started (except for the tests you added).
 
+**Thin shells** (code that opens UIs, talks to devices or the network, or can hang) may be excluded from mutation runs if they only wire calls to tested logic; list each by path in your report.
+
+## Scenario mutation
+
+When `acceptance.feature` exists, for each `Scenario Outline` example row change one value at a time and run the tests carrying that scenario's ID. A survivor means the test doesn't constrain that value: tighten the test — never weaken the spec. If a change shows a step has no effect, remove the step rather than adding columns. Revert every example change after its run. No feature file (two-pack): note "no acceptance.feature — scenario mutation skipped" and move on.
+
 ## The kill loop
 
 For every mutant the test suite did not catch:
@@ -34,9 +40,17 @@ Exception: a mutant that is provably **equivalent** (the mutation cannot change 
 - Keep runs narrow and the machine polite: impacted test scope only, `nice -19` for long runs, one mutation run at a time.
 - Do not stop at a percentage. The exit condition is: zero surviving non-equivalent mutants in the touched files.
 
+## Final gates
+
+After your last change, run in order: impacted test suites; property tests as their own command, if the project has them; the CRAP gate on touched files (≤ 6, per `gauntlet-cleaner`) — later restructuring can push scores back up.
+
+## Audit before return
+
+Re-read the architect's report and the current diff. List every touched production file with its mutation result (killed / equivalent / thin shell excluded), plus each scenario-mutation row, or GAP. Close every GAP you can, re-run the final gates, then report.
+
 ## Output
 
-Return: mutants generated / killed / surviving-equivalent (with justifications), tests added, confirmation the working tree carries no leftover mutations, and the final green test run.
+Return: a requirement → evidence table (touched file → mutation result / GAP), thin shells by path, scenario-mutation results (or the skip note), CRAP gate output, mutants generated / killed / surviving-equivalent (with justifications), tests added, confirmation the working tree carries no leftover mutations, and the final green test run.
 
 ## See also
 

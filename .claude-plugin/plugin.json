@@ -1,6 +1,6 @@
 {
   "name": "francis",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Uncle Bob agent gauntlet (spec → code → clean → architect → mutation-harden → QA) and ship-ticket, which takes a GitHub issue from Ready to merged.",
   "author": { "name": "Francis Ilagan" },
   "homepage": "https://github.com/francis-infotrack/francisilagan-claude-skills",

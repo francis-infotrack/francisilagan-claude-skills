@@ -13,10 +13,15 @@ The caller gives you the story slug and/or branch. Diff against the merge base. 
 
 Work through these in order:
 
-1. **UI/Core separation.** UI, framework, IO, and delivery details separated from core rules; core behaviour testable without UI or IO.
+1. **UI/Core separation.** UI, framework, IO, and delivery details separated from core rules; core behaviour testable without UI or IO. For each value the UI displays from application state, find the domain function that already knows it.
 2. **Dependency rule.** High-level modules far from IO must not depend on low-level modules near IO; low-level code depends inward through stable abstractions owned by the high-level side. Cross-module communication goes through whatever contract surface the project defines — never directly into another module's internals.
 3. **Information hiding.** Modules expose only necessary concepts; representation, persistence shapes, framework types, and wire formats do not leak across boundaries or into the domain.
 4. **Accidental surface.** Types made public only so another slice could reach them, interfaces with one trivial implementation and one caller, parameter chains threading knowledge through layers — narrow them.
+
+Apply throughout:
+- An adapter must not re-derive what the domain already computes; it calls the domain and translates the result.
+- A domain function used only by tests while an adapter re-implements it is a defect — wire it in or delete it.
+- An architecture-check allow-list describes the intended structure, not current accidents. When the right fix is an inward call, update the allow-list.
 
 ## The deterministic gate
 
@@ -28,15 +33,21 @@ When your review finds a real boundary the project's checks do **not** yet enfor
 
 After structural review, assess whether the story's domain logic has invariants worth property-testing (round-trips, conservation, idempotence, ordering, parsing/formatting stability). If the project already has a property-testing framework, add the cases; if not, **propose** the cases and the package addition in your report — do not add packages unilaterally.
 
+If the project already has property tests, run them as their own command, separate from coverage and mutation runs.
+
 ## Rules
 
 - **Behaviour-preserving only.** Run the impacted tests plus the architecture checks after each restructuring; never weaken a test or an architecture rule to make a violation pass.
 - Restructure only what the diff strained. Repo-wide reorganisation is out of scope — flag it in the report instead.
 - Commit separately (`refactor(<scope>): ...` / `test(arch): ...` or the project's convention).
 
+## Audit before return
+
+Re-read the cleaner's report and the current diff. List every review phase with its finding or "none", and every architecture check with its gate output, or GAP. Close every GAP you can, re-run the impacted tests, architecture checks, and property tests after the last change, then report.
+
 ## Output
 
-Return: findings per review phase (clean / fixed / flagged), any architecture checks added, proposed property-test cases, and confirmation that impacted tests + architecture checks are green.
+Return: a requirement → evidence table (review phase → finding / "none" / GAP), findings per review phase (clean / fixed / flagged), any architecture checks added, proposed property-test cases, and confirmation that impacted tests + architecture checks are green.
 
 ## See also
 

@@ -50,6 +50,7 @@ Sequential, one stage per fresh context:
 
 - A stage that fails its gate loops **within itself** until the gate passes — the gate's verdict is the exit condition, not the agent's judgment.
 - A stage that discovers an upstream defect (spec contradiction, production bug, dead branch) does not fix it in place. Bounce: re-dispatch the owning upstream stage with the finding, then re-run the stages between. After the second bounce for the same finding, stop and surface it to the user.
+- Every stage report ends with its requirement → evidence table (composed dispatches: one per role). A report without one, or with an unexplained GAP, goes back to the same stage.
 - Every stage commits its own work in the project's commit convention before handoff. Never squash stages together — per-stage commits are the audit trail.
 - Respect the machine: stages run one at a time, narrow test scopes, `nice -19` for mutation runs.
 

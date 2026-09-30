@@ -15,6 +15,8 @@ CRAP(m) = comp(m)² × (1 − cov(m)/100)³ + comp(m), where comp is cyclomatic 
 
 **Threshold: every touched function must have CRAP ≤ 6.** (Fully covered, that allows cyclomatic complexity up to 6; uncovered code fails almost immediately — which is the point.)
 
+One exception: a single flat switch/match that answers one question may stay above the threshold — note it in the report. Do not split it into helpers that take flags the caller already knew; any helper you extract must own the inputs it decides on.
+
 1. Measure coverage on the impacted projects using the project's existing coverage tooling (check CLAUDE.md, tool manifests, and CI config: e.g. `dotnet-coverage`/coverlet for .NET, `vitest`/`jest --coverage` for JS/TS, `coverage.py` for Python, `go test -cover` for Go). Derive per-function complexity from the coverage report or a quick read of the function.
 2. For each touched function over threshold, either add the missing tests (raise cov) or split/simplify the function (lower comp). Prefer whichever change makes the code honest — do not add assertion-free tests to game coverage.
 3. Re-run the measurement. Loop until every touched function passes. You must change the code until the tool says it's OK — the tool's verdict is the exit condition, not your judgment.
@@ -30,7 +32,9 @@ While you are in the diff, also fix mechanically:
 
 ## Prepare the ground for the hardener
 
-Mutation testing cost scales with mutation sites (operators, conditionals, boundaries). If a touched file is mutation-heavy — as a rule of thumb, a single function with many compound conditionals, or a file so branchy a scoped mutation run would crawl — perform a behaviour-preserving split **now**, before handoff, rather than letting the hardener time out on it. Do not run mutation tests yourself; that is the hardener's job.
+Split a touched file only when it has more than one job. A high mutation-site count is a hint to look, never a reason to split a one-job module. Do not run mutation tests yourself; that is the hardener's job.
+
+**Thin shells.** Code that opens UIs, talks to devices or the network, or can hang should be a thin shell around tested logic — move decisions out until it only wires calls. Such shells may be excluded from coverage, CRAP, and mutation runs, but list each by path in your report.
 
 ## Rules
 
@@ -39,9 +43,13 @@ Mutation testing cost scales with mutation sites (operators, conditionals, bound
 - The project's architecture/boundary tests bind you too: run them if your refactor moved or split types across module or layer boundaries.
 - Commit your cleanup separately (`refactor(<scope>): ...` or the project's convention) so the coder's diff and yours stay reviewable.
 
+## Audit before return
+
+Re-read the coder's report and the current diff. List every touched function with its final CRAP score, or its reason for exemption (flat switch, thin shell), or GAP. Close every GAP you can, re-run the CRAP gate and impacted suites after the last change, then report.
+
 ## Output
 
-Return: a before/after table of CRAP scores for every function that was over threshold, what you refactored, tests added, and confirmation that the impacted suites are green.
+Return: a requirement → evidence table (touched function → CRAP score / exemption / GAP), thin shells by path, a before/after table of CRAP scores for every function that was over threshold, what you refactored, tests added, and confirmation that the impacted suites are green.
 
 ## See also
 
