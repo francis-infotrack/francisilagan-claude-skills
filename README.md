@@ -36,6 +36,13 @@ In the four- and six-pack you approve the spec before any code is written: the s
 
 Every stage ends by auditing its own work: a requirement → evidence table (scenario → test, function → CRAP score, file → mutation result, QA step → verdict), and a report with a missing table or an unexplained gap goes back to that stage. The hardener also mutates `Scenario Outline` example values, and QA fails any scenario ID that no test carries.
 
+Flags: `--no-gate` (skip the spec gate), `--model <alias>` (run every stage on one model), `--restart` (ignore saved state).
+
+- **Per-stage models**: specifier, architect and hardener run on `opus` (mistakes there propagate); coder, cleaner and QA on `sonnet` (volume work). Set in each agent's frontmatter.
+- **Resume**: the orchestrator writes `.claude/specs/gauntlet/<slug>/state.json` after every gate, and a re-run on the same branch picks up at the first unpassed stage. The same file records per-stage wall time, bounces and headline numbers, reported as a Run cost table.
+- **crap-gate**: `bin/crap-gate` → `lib/crap_gate.py` gives the CRAP verdict from Cobertura coverage plus complexity (Cobertura `complexity` attributes, or `lizard`, which you install with `pipx install lizard`). Stages run `crap-gate --coverage <xml> --since origin/<default>`, and the exit code is the gate. `--help` has the details.
+- **Tests-only hook**: `hooks/hooks.json` → `lib/tests_only_guard.py` blocks Edit/Write to non-test paths for `gauntlet-hardener` and `gauntlet-qa`. For unusual test layouts, list extra globs in `.claude/gauntlet-test-paths`. Bash writes are not intercepted.
+
 Given an issue reference it runs in **ticket mode**: claims the issue, opens a draft PR with `Closes #n`, and lets the repo's project-sync workflow move the board card.
 
 ## ship-ticket
@@ -56,3 +63,7 @@ The gauntlet's roles and several of its rules are inspired by Robert C. Martin's
 claude plugin validate . --strict
 python3 -m unittest discover -s tests
 ```
+
+### Evals
+
+See [`evals/README.md`](evals/README.md).

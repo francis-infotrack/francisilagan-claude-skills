@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<coverage line-rate="0.5" branch-rate="0.5" version="1.9" timestamp="1700000000" lines-covered="6" lines-valid="12">
+  <sources>
+    <source>/build/agent/app/</source>
+  </sources>
+  <packages>
+    <package name="App" line-rate="0.5" branch-rate="0.5" complexity="17">
+      <classes>
+        <class name="App.Services.Calc" filename="src/Calc.cs" line-rate="0.5" branch-rate="0.5" complexity="15">
+          <methods>
+            <method name="Add" signature="(System.Int32,System.Int32)" line-rate="1" branch-rate="1" complexity="1">
+              <lines>
+                <line number="5" hits="3" branch="False" />
+                <line number="6" hits="3" branch="False" />
+              </lines>
+            </method>
+            <method name="Classify" signature="(System.Int32)" line-rate="0" branch-rate="0" complexity="5">
+              <lines>
+                <line number="10" hits="0" branch="False" />
+                <line number="11" hits="0" branch="True" condition-coverage="0% (0/4)" />
+                <line number="12" hits="0" branch="False" />
+              </lines>
+            </method>
+            <method name="Half" signature="(System.Int32)" line-rate="0.5" branch-rate="0.5" complexity="3">
+              <lines>
+                <line number="20" hits="2" branch="False" />
+                <line number="21" hits="2" branch="True" condition-coverage="50% (1/2)" />
+                <line number="22" hits="0" branch="False" />
+                <line number="23" hits="0" branch="False" />
+              </lines>
+            </method>
+            <method name="Six" signature="()" line-rate="1" branch-rate="1" complexity="6">
+              <lines>
+                <line number="30" hits="1" branch="False" />
+              </lines>
+            </method>
+          </methods>
+          <lines>
+            <line number="5" hits="3" branch="False" />
+            <line number="6" hits="3" branch="False" />
+            <line number="10" hits="0" branch="False" />
+            <line number="11" hits="0" branch="True" condition-coverage="0% (0/4)" />
+            <line number="12" hits="0" branch="False" />
+            <line number="20" hits="2" branch="False" />
+            <line number="21" hits="2" branch="True" condition-coverage="50% (1/2)" />
+            <line number="22" hits="0" branch="False" />
+            <line number="23" hits="0" branch="False" />
+            <line number="30" hits="1" branch="False" />
+          </lines>
+        </class>
+        <class name="App.Services.Other" filename="src/Other.cs" line-rate="1" branch-rate="1" complexity="2">
+          <methods>
+            <method name="Run" signature="()" line-rate="1" branch-rate="1" complexity="2">
+              <lines>
+                <line number="5" hits="1" branch="False" />
+              </lines>
+            </method>
+          </methods>
+          <lines>
+            <line number="5" hits="1" branch="False" />
+          </lines>
+        </class>
+      </classes>
+    </package>
+  </packages>
+</coverage>

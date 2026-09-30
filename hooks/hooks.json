@@ -1,0 +1,17 @@
+{
+  "description": "tests-only-guard: blocks gauntlet-hardener and gauntlet-qa from editing production code (scoped by the hook input's agent_type; plugin subagents ignore frontmatter hooks)",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/lib/tests_only_guard.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

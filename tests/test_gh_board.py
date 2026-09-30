@@ -16,7 +16,8 @@ class FakeGhCase(unittest.TestCase):
     def setUp(self):
         self.dir = Path(tempfile.mkdtemp())
         for f in (HERE / "fixtures").iterdir():
-            shutil.copy(f, self.dir / f.name)
+            if f.is_file():
+                shutil.copy(f, self.dir / f.name)
         os.chmod(HERE / "fakes" / "gh", 0o755)
         self.env = dict(os.environ, PATH=f"{HERE / 'fakes'}:{os.environ['PATH']}", FAKE_GH_DIR=str(self.dir))
         self.env.pop("BOARD_OWNER", None)
