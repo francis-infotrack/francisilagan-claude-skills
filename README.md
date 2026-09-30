@@ -63,7 +63,3 @@ The gauntlet's roles and several of its rules are inspired by Robert C. Martin's
 claude plugin validate . --strict
 python3 -m unittest discover -s tests
 ```
-
-### Evals
-
-See [`evals/README.md`](evals/README.md).
