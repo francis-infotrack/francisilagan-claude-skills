@@ -1,6 +1,6 @@
 ---
 name: ship-ticket
-description: Take a GitHub issue from Ready to merged with no human in the loop — claim it, implement it through the gauntlet (ticket mode, draft PR), then loop a fresh code review (built-in `code-review` plus an acceptance-criteria check) and a fresh fixer sub-agent until a review round produces no fixes, wait for CI, and squash-merge. Use when the user says "ship ticket", "pick up a ticket and implement it end to end", or "/ship-ticket".
+description: Take a GitHub issue from Ready to merged with no human in the loop — claim it, implement it through the gauntlet (ticket mode, draft PR), then loop a fresh code review (built-in `code-review` plus an acceptance-criteria check) and a fresh fixer sub-agent until a review round produces no fixes or only Low-severity findings, wait for CI, and squash-merge. Use when the user says "ship ticket", "pick up a ticket and implement it end to end", or "/ship-ticket".
 argument-hint: "[#issue | issue URL] [2|4|6]  (no issue = top Ready item on the board)"
 allowed-tools: Bash, Read, Write, Edit, Grep, Glob, Agent, Skill
 ---
@@ -46,6 +46,9 @@ when your turn ends). Its brief:
 > missing or implemented wrongly, quoting the criterion. Findings already raised and
 > declined in earlier rounds are listed below with the reason. Do not repeat one unless
 > the code has changed in a way that invalidates the reason.
+> Tag every finding with a severity: **High**, **Medium** or **Low**. A missing or
+> wrongly implemented acceptance criterion is at least Medium. Low means a minor
+> defect or improvement that cannot lose data, break a criterion, or break the build.
 
 Pass it the spec (the issue body + comments from `gh issue view <n> --comments`, plus
 `.claude/specs/gauntlet/<slug>/acceptance.feature` if the gauntlet wrote one), the repo's
@@ -75,9 +78,11 @@ test/lint/typecheck commands and byte-pin rules, and this brief:
 Append its table to the ledger. Then:
 
 - **It made zero commits** (everything declined) → loop done (go to 4).
-- **It made commits** → next round (back to 3a).
-- **Round 5 would start**, or the same finding has been FIXed twice and raised a third
-  time → blocked: comment the ledger on the PR and issue, add `needs-human`
+- **Every finding this round was Low** → loop done (go to 4), even if the fixer made
+  commits. Low-only fixes are not reviewed again: the severity floor, not a round
+  count, is what ends the loop.
+- **It made commits and the round had a High or Medium finding** → next round (back to 3a).
+- **The same finding has been FIXed twice and raised a third time** → blocked: comment the ledger on the PR and issue, add `needs-human`
   (`gh label create needs-human --color B60205` if missing), `git push` so the PR holds
   the fixes, convert the PR back to draft
   (`gh pr ready <pr> --undo`), stop and report.
@@ -94,8 +99,7 @@ when you return.
 - Green → go to 5.
 - Red → pull the failing job's log (`gh run view <run-id> --log-failed`), dispatch a
   fresh fixer (commit, no push) with the log as its only finding, then run one more review round (3a) on
-  the result — a CI fix is a code change and gets reviewed like any other. Counts
-  toward the round cap. Never re-run a red job hoping it flakes green without first
+  the result — a CI fix is a code change and gets reviewed like any other. Never re-run a red job hoping it flakes green without first
   reading its log; if it genuinely is a flake, say so in the final report.
 
 ## 5. Merge
