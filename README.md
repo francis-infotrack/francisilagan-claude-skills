@@ -40,7 +40,7 @@ Flags: `--no-gate` (skip the spec gate), `--model <alias>` (run every stage on o
 
 - **Per-stage models**: specifier, architect and hardener run on `opus` (mistakes there propagate); coder, cleaner and QA on `sonnet` (volume work). Set in each agent's frontmatter.
 - **Resume**: the orchestrator writes `.claude/specs/gauntlet/<slug>/state.json` after every gate, and a re-run on the same branch picks up at the first unpassed stage. The same file records per-stage wall time, bounces and headline numbers, reported as a Run cost table.
-- **crap-gate**: `bin/crap-gate` → `lib/crap_gate.py` gives the CRAP verdict from Cobertura coverage plus complexity (Cobertura `complexity` attributes, or `lizard`, which you install with `pipx install lizard`). Stages run `crap-gate --coverage <xml> --since origin/<default>`, and the exit code is the gate. `--help` has the details.
+- **crap-gate**: `bin/crap-gate` → `lib/crap_gate.py` gives the CRAP verdict from Cobertura coverage plus complexity (Cobertura `complexity` attributes; for TS/JS, `lib/ts_complexity.cjs` via `node` and the project's own `typescript`, because lizard mis-parses TypeScript; otherwise `lizard`, which you install with `pipx install lizard`). Stages run `crap-gate --coverage <xml> --since origin/<default>`, and the exit code is the gate. `--help` has the details.
 - **Tests-only hook**: `hooks/hooks.json` → `lib/tests_only_guard.py` blocks Edit/Write to non-test paths for `gauntlet-hardener` and `gauntlet-qa`. For unusual test layouts, list extra globs in `.claude/gauntlet-test-paths`. Bash writes are not intercepted.
 
 Given an issue reference it runs in **ticket mode**: claims the issue, opens a draft PR with `Closes #n`, and lets the repo's project-sync workflow move the board card.

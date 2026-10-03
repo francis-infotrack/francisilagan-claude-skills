@@ -15,10 +15,14 @@ MAX coverage when two reports cover the same function.
 
 Complexity, in order:
   1. the `complexity` attribute on Cobertura <method> elements when present and > 0 (dotnet);
-  2. `lizard --csv` on PATH: functions come from lizard's line ranges and each function's
-     coverage is computed from the report's <line> hits inside that range (coverage.py,
-     istanbul/vitest/jest, anything without per-method complexity);
-  3. otherwise exit 2 - install lizard (`pipx install lizard`).
+  2. TS/JS files (.ts .tsx .mts .cts .js .jsx .mjs .cjs): `lib/ts_complexity.cjs`, which
+     parses with the project's own `typescript` package via `node`. lizard's TS reader
+     mis-parses ordinary code (a ternary's `:` swallows the closing brace, folding later
+     functions into one), so it is only a fallback here, with a warning on stderr;
+  3. everything else: `lizard --csv` on PATH.
+  Functions come from those line ranges and each function's coverage is computed from the
+  report's <line> hits inside that range (coverage.py, istanbul/vitest/jest, anything without
+  per-method complexity). No measurer available -> exit 2 (`pipx install lizard`).
 
 Scope: --since REF = files in `git diff --name-only REF...HEAD`; --files = explicit list;
 neither = every function in the reports. Report filenames are resolved against <sources>
@@ -129,7 +133,35 @@ def method_record(m, cls_name):
     }
 
 
-# ---------------------------------------------------------------- lizard
+# ---------------------------------------------------------------- complexity measurers
+
+TS_EXTENSIONS = (".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs")
+TS_MEASURER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ts_complexity.cjs")
+
+
+def measure(paths):
+    """Return {abs_path: [(name, start, end, ccn), ...]}: TS/JS via the TS compiler, the rest via lizard."""
+    ts_paths = {p for p in paths if p.lower().endswith(TS_EXTENSIONS)}
+    measured = run_ts_complexity(ts_paths)
+    fallback = ts_paths - set(measured)
+    return {**measured, **run_lizard((paths - ts_paths) | fallback)}
+
+
+def run_ts_complexity(paths):
+    """Measure TS/JS files with the project's typescript package; {} (and a warning) when unavailable."""
+    if not paths:
+        return {}
+    node = shutil.which("node")
+    if node:
+        proc = subprocess.run([node, TS_MEASURER, *sorted(paths)], capture_output=True, text=True)
+        if proc.returncode == 0:
+            return {p: [tuple(f) for f in funcs] for p, funcs in json.loads(proc.stdout).items()}
+        reason = proc.stderr.strip() or f"ts_complexity exited {proc.returncode}"
+    else:
+        reason = "node not on PATH"
+    print(f"crap-gate: warning: {reason}; falling back to lizard for TS/JS, whose TS parsing is unreliable", file=sys.stderr)
+    return {}
+
 
 def run_lizard(paths):
     """Return {abs_path: [(name, start, end, ccn), ...]} from `lizard --csv`."""
@@ -179,7 +211,7 @@ def load(reports, in_scope):
                 if not entry["abs"]:
                     raise GateError(f"cannot locate source file {key!r} to measure complexity (run from the repo root)")
                 need[entry["abs"]] = key
-    measured = run_lizard(set(need))
+    measured = measure(set(need))
     merged = {}
     for files in parsed:
         for key, entry in files.items():

@@ -30,9 +30,16 @@ class GateCase(unittest.TestCase):
         shutil.copytree(FIXTURES, self.dir, dirs_exist_ok=True)
         for xml in self.dir.glob("*.xml"):
             xml.write_text(xml.read_text().replace("@ROOT@", str(self.dir)))
-        os.chmod(self.dir / "fakes" / "lizard", 0o755)
+        for fake in ("lizard", "node"):
+            os.chmod(self.dir / "fakes" / fake, 0o755)
         self.log = self.dir / "lizard.log"
-        self.env = dict(os.environ, PATH=f"{self.dir / 'fakes'}:{os.environ['PATH']}", FAKE_LIZARD_LOG=str(self.log))
+        self.node_log = self.dir / "node.log"
+        self.env = dict(
+            os.environ,
+            PATH=f"{self.dir / 'fakes'}:{os.environ['PATH']}",
+            FAKE_LIZARD_LOG=str(self.log),
+            FAKE_NODE_LOG=str(self.node_log),
+        )
 
     def tearDown(self):
         shutil.rmtree(self.dir)
@@ -164,6 +171,50 @@ class CoveragePy(GateCase):
         self.assertEqual(proc.returncode, 0)
         self.assertEqual(proc.stdout.splitlines()[-1], "crap-gate: 0 functions, 0 over threshold 6")
         self.assertFalse(self.log.exists())
+
+
+class TypeScript(GateCase):
+    def test_ts_files_are_measured_with_the_ts_compiler_not_lizard(self):
+        code, data = self.json_of("--coverage", "vitest.xml")
+        fns = self.by_name(data)
+        self.assertEqual(code, 0)
+        self.assertEqual(fns["pick"], dict(fns["pick"], complexity=2, coverage=100, crap=2, file="project/src/panel.tsx"))
+        self.assertAlmostEqual(fns["Panel"]["coverage"], 33.33, places=2)  # lines 5-8: 5 hit, 6 and 7 not
+        self.assertEqual(fns["label"]["coverage"], 0)
+        self.assertTrue(self.node_log.read_text().split()[0].endswith("lib/ts_complexity.cjs"))
+        self.assertTrue(self.node_log.read_text().strip().endswith("project/src/panel.tsx"))
+        self.assertFalse(self.log.exists(), "lizard must not measure TS when the TS measurer works")
+
+    def test_falls_back_to_lizard_with_a_warning(self):
+        proc = self.run_gate("--coverage", "vitest.xml", env=dict(self.env, FAKE_NODE_FAIL="1"))
+        self.assertIn("falling back to lizard", proc.stderr)
+        self.assertIn("typescript not found", proc.stderr)
+        self.assertTrue(self.log.read_text().strip().endswith("project/src/panel.tsx"))
+
+
+@unittest.skipUnless(os.environ.get("CRAP_GATE_TYPESCRIPT"), "set CRAP_GATE_TYPESCRIPT to a typescript package dir")
+class TsComplexityMeasurer(unittest.TestCase):
+    """Runs the real lib/ts_complexity.cjs against the fixture with a real typescript package."""
+
+    def test_ternary_return_does_not_swallow_the_next_function(self):
+        work = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, work)
+        (work / "node_modules").mkdir()
+        os.symlink(os.environ["CRAP_GATE_TYPESCRIPT"], work / "node_modules" / "typescript")
+        shutil.copy(FIXTURES / "project" / "src" / "panel.tsx", work / "panel.tsx")
+        proc = subprocess.run(
+            ["node", str(ROOT / "lib" / "ts_complexity.cjs"), "panel.tsx"], cwd=work, capture_output=True, text=True
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(json.loads(proc.stdout), {"panel.tsx": [["pick", 1, 3, 2], ["Panel", 5, 8, 2], ["label", 6, 6, 2]]})
+
+    def test_missing_typescript_exits_3(self):
+        work = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, work)
+        (work / "a.ts").write_text("export const a = 1\n")
+        proc = subprocess.run(["node", str(ROOT / "lib" / "ts_complexity.cjs"), "a.ts"], cwd=work, capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 3)
+        self.assertIn("typescript not found", proc.stderr)
 
 
 class InputErrors(GateCase):
